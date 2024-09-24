@@ -8,6 +8,11 @@ function getCsvRecord(fileName) {
     return new Promise((resolve) => {
         const results = [];
         const filePath = path.join(__dirname, 'files', `${fileName}.csv`);
+      
+        if (!fs.existsSync(filePath)) {
+            console.log(`File ${filePath} does not exist.`);
+            return resolve([]);
+        }
 
         try {
             fs.createReadStream(filePath)
@@ -73,4 +78,21 @@ async function updateData(fileName, schema, id, newData) {
     return updatedRecords.find(record => parseInt(record.id) === parseInt(id));
 }
 
-module.exports = { storeData, getCsvRecord, updateData };
+async function replaceAllData(fileName, schema, newData) {
+    const filePath = path.join(__dirname, 'files', `${fileName}.csv`);
+
+    // Create a CSV writer without append mode to overwrite the file
+    const csvWriter = createCsvWriter({
+        path: filePath,
+        header: schema,
+        append: false // Overwrite the file
+    });
+
+    // Write the new data to the CSV, replacing the existing content
+    await csvWriter.writeRecords(newData);
+
+    // Return the newly written data
+    return newData;
+}
+
+module.exports = { storeData, getCsvRecord, updateData, replaceAllData };

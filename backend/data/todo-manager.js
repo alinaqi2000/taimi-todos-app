@@ -1,4 +1,4 @@
-const { storeData, getCsvRecord, updateData } = require('./data-manager')
+const { storeData, getCsvRecord, updateData, replaceAllData } = require('./data-manager')
 
 
 const FILE_NAME = 'todos';
@@ -21,4 +21,13 @@ async function getTodos(userId) {
     return (await getCsvRecord(FILE_NAME)).filter(t => t.userId === userId);
 }
 
-module.exports = { saveTodo, getTodos, updateTodo }
+async function getTodoById(id) {
+    return (await getCsvRecord(FILE_NAME)).filter(t => t.id === id);
+}
+
+async function deleteTodo(id) {
+    const todos = (await getCsvRecord(FILE_NAME)).filter(t => t.id !== id);
+    return await replaceAllData(FILE_NAME, SCHEMA, todos)
+}
+
+module.exports = { saveTodo, getTodos, getTodoById, updateTodo, deleteTodo }

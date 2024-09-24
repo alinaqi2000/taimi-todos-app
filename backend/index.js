@@ -1,3 +1,4 @@
+const cors = require('cors');
 const dotenv = require('dotenv');
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
@@ -14,6 +15,7 @@ if (process.env.NODE_ENV === 'test') {
 const app = express()
 const PORT = 5000
 
+app.use(cors());
 app.use(express.json());
 
 const swaggerOptions = {
@@ -44,6 +46,8 @@ app.use('/users', userRouter);
 app.use('/todos', todoRouter);
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT);
+    app.listen(PORT, () => {
+        console.log(`Server is listening on port ${PORT}`)
+    });
 }
 module.exports = app;

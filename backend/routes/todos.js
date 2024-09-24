@@ -1,5 +1,5 @@
 const express = require('express');
-const { getTodos, saveTodo, updateTodo } = require('../data/todo-manager');
+const { getTodos, saveTodo, updateTodo, getTodoById, deleteTodo } = require('../data/todo-manager');
 
 const todoRouter = express.Router();
 
@@ -42,7 +42,14 @@ todoRouter.get("/all/:userId", async (req, res) => {
 
     const todos = await getTodos(userId);
 
-    res.json({ todos })
+    const newTodosList = todos.map((u) => ({
+        id: u.id,
+        userId: u.userId,
+        title: u.title,
+        completed: JSON.parse(u.completed)
+    }));
+
+    res.json({ todos: newTodosList })
 });
 
 /**
@@ -177,7 +184,60 @@ todoRouter.put("/update/:id", async (req, res) => {
 
     const todo = await updateTodo(id, { title, completed, userId })
 
-    res.json({ todo })
+    res.json({
+        todo: {
+            ...todo,
+            completed: JSON.parse(todo.completed)
+        }
+    })
 });
+
+/**
+ * @swagger
+ * /todos/delete/{id}:
+ *   delete:
+ *     summary: Delete a todo
+ *     tags: [Todos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Todo deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Todo not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+todoRouter.delete("/delete/:id", async (req, res) => {
+    const id = req.params.id;
+
+    const todos = await getTodoById(id);
+
+    if (!todos[0]) {
+        res.status(404).json({ error: "Todo not found." });
+        return;
+    }
+
+    await deleteTodo(id);
+
+    res.json({ message: "Todo deleted successfully." });
+});
+
 
 module.exports = todoRouter;
