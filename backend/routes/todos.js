@@ -43,7 +43,7 @@ todoRouter.get("/all/:userId", async (req, res) => {
     const todos = await getTodos(userId);
 
     const newTodosList = todos.map((u) => ({
-        id: u.id,
+        id: u._id,
         userId: u.userId,
         title: u.title,
         completed: JSON.parse(u.completed)

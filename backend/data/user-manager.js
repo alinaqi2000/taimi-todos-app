@@ -1,40 +1,27 @@
-const { storeData, getCsvRecord } = require('./data-manager')
-const dotenv = require('dotenv');
+const { storeData, getData } = require('./data-manager')
 
-if (process.env.NODE_ENV === 'test') {
-    dotenv.config({ path: './.env.test' });
-} else {
-    dotenv.config();
-}
-
-const FILE_NAME = process.env.USERS_DATA_FILE_NAME;
-const SCHEMA = [
-    { id: 'id', title: 'id' },
-    { id: 'name', title: 'name' },
-    { id: 'email', title: 'email' },
-    { id: 'password', title: 'password' },
-]
+const COLLECTION_NAME = 'users';
 
 async function saveUser(userData) {
-    return await storeData(FILE_NAME, SCHEMA, userData);
+    return await storeData(COLLECTION_NAME, userData);
 }
 
 async function getUsers() {
-    return await getCsvRecord(FILE_NAME);
+    return await getData(COLLECTION_NAME);
 }
 
 async function checkCredentials(email, password) {
     const users = await getUsers();
-    const index = users.findIndex(u => u.email === email && u.password === password);
+    const user = users.find(u => u.email === email && u.password === password);
 
-    if (index === -1) {
+    if (!user) {
         return false;
     }
 
     return {
-        id: users[index].id,
-        name: users[index].name,
-        email: users[index].email
+        id: user._id,
+        name: user.name,
+        email: user.email
     };
 }
 

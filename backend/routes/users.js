@@ -35,7 +35,7 @@ userRouter.get("/all", async (req, res) => {
     const users = await getUsers();
 
     const newUsersList = users.map((u) => ({
-        id: u.id,
+        id: u._id,
         name: u.name,
         email: u.email
     }));

@@ -1,33 +1,30 @@
-const { storeData, getCsvRecord, updateData, replaceAllData } = require('./data-manager')
+const { storeData, getData, updateData, replaceAllData } = require('./data-manager')
+const { ObjectId } = require('mongodb');
 
-
-const FILE_NAME = 'todos';
-const SCHEMA = [
-    { id: 'id', title: 'id' },
-    { id: 'userId', title: 'userId' },
-    { id: 'title', title: 'title' },
-    { id: 'completed', title: 'completed' },
-]
+const COLLECTION_NAME = 'todos';
 
 async function saveTodo(todoData) {
-    return await storeData(FILE_NAME, SCHEMA, todoData);
+    return await storeData(COLLECTION_NAME, todoData);
 }
 
 async function updateTodo(id, todoData) {
-    return await updateData(FILE_NAME, SCHEMA, id, todoData);
+    return await updateData(COLLECTION_NAME, id, todoData);
 }
 
 async function getTodos(userId) {
-    return (await getCsvRecord(FILE_NAME)).filter(t => t.userId === userId);
+    const todos = await getData(COLLECTION_NAME);
+    return todos.filter(t => t.userId === userId);
 }
 
 async function getTodoById(id) {
-    return (await getCsvRecord(FILE_NAME)).filter(t => t.id === id);
+    const todos = await getData(COLLECTION_NAME);
+    return todos.filter(t => t._id.toString() === id);
 }
 
 async function deleteTodo(id) {
-    const todos = (await getCsvRecord(FILE_NAME)).filter(t => t.id !== id);
-    return await replaceAllData(FILE_NAME, SCHEMA, todos)
+    const todos = await getData(COLLECTION_NAME);
+    const filteredTodos = todos.filter(t => t._id.toString() !== id);
+    return await replaceAllData(COLLECTION_NAME, filteredTodos);
 }
 
 module.exports = { saveTodo, getTodos, getTodoById, updateTodo, deleteTodo }

@@ -12,15 +12,15 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
 import { API_URL } from "@/constants"
 import axios from "axios"
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { FiPlus } from "react-icons/fi";
 import { userStore } from "@/store/user.store"
 import { TodoResponse } from "@/lib/responses"
 import { todoStore } from "@/store/todo.store"
 import { useState } from "react"
+import ClipLoader from "react-spinners/ClipLoader";
 
 const FormSchema = z.object({
     title: z.string().min(3, { message: "Title must be atleats 3 characters" })
@@ -30,6 +30,7 @@ export default function AddTodo() {
     const { user } = userStore();
     const { addTodo } = todoStore();
     const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -38,13 +39,15 @@ export default function AddTodo() {
         },
     })
     async function onSubmit(data: z.infer<typeof FormSchema>) {
+        setLoading(true);
         const response = await axios.post<TodoResponse>(`${API_URL}todos/create`, {
             title: data.title,
             completed: false,
             userId: user?.id
         })
             .then(res => res.data)
-            .catch(res => res.response.data)
+            .catch(err => err.response.data)
+            .finally(() => setLoading(false))
 
         if (response.error) {
             toast({ description: response.error, variant: "destructive" })
@@ -77,7 +80,7 @@ export default function AddTodo() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" size={"sm"}>Submit</Button>
+                        <Button type="submit" disabled={loading} className="w-full" size={"sm"}>{loading ? <ClipLoader className='mx-auto' size={12} /> : "Submit"}</Button>
                     </form>
                 </Form>
             </DrawerContent>

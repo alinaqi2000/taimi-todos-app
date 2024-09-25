@@ -1,98 +1,40 @@
-const fs = require('fs');
-const path = require('path');
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const csv = require('csv-parser');
+const { MongoClient, ObjectId } = require('mongodb');
 
+const uri = process.env.MONGO_DB_URL;
+const client = new MongoClient(uri);
+const dbName = "todosApp";
 
-function getCsvRecord(fileName) {
-    return new Promise((resolve) => {
-        const results = [];
-        const filePath = path.join(__dirname, 'files', `${fileName}.csv`);
-      
-        if (!fs.existsSync(filePath)) {
-            console.log(`File ${filePath} does not exist.`);
-            return resolve([]);
-        }
-
-        try {
-            fs.createReadStream(filePath)
-                .pipe(csv())
-                .on('data', (row) => {
-                    results.push(row);
-                })
-                .on('end', () => {
-                    resolve(results);
-                }).on('error', () => {
-                    resolve([])
-                })
-
-        } catch (error) {
-            resolve([]);
-        }
-    });
+async function connectToDatabase() {
+    await client.connect();
+    return client.db(dbName);
 }
 
-function readCsvFile(fileName, schema) {
-    const filePath = path.join(__dirname, 'files', `${fileName}.csv`);
-
-    return createCsvWriter({
-        path: filePath,
-        header: schema,
-        append: fs.existsSync(filePath)
-    });
+async function getData(collectionName) {
+    const db = await connectToDatabase();
+    const collection = db.collection(collectionName);
+    return await collection.find({}).toArray();
 }
 
-async function storeData(fileName, schema, data) {
-    const csvFile = readCsvFile(fileName, schema);
-
-    const id = Math.ceil(Math.random() * 100000);
-    const modifiedData = { id, ...data };
-
-    await csvFile.writeRecords([modifiedData])
-
-    return modifiedData;
+async function storeData(collectionName, data) {
+    const db = await connectToDatabase();
+    const collection = db.collection(collectionName);
+    const result = await collection.insertOne(data);
+    return { id: result.insertedId, ...data };
 }
 
-async function updateData(fileName, schema, id, newData) {
-    const records = await getCsvRecord(fileName); // Fetch all existing records
-    const filePath = path.join(__dirname, 'files', `${fileName}.csv`);
-
-    // Find and update the record with the matching ID
-    const updatedRecords = records.map(record => {
-        if (parseInt(record.id) === parseInt(id)) {
-            return { ...record, ...newData }; // Update record with new data
-        }
-        return record;
-    });
-
-    // Create a CSV writer without append mode to overwrite the file
-    const csvWriter = createCsvWriter({
-        path: filePath,
-        header: schema,
-        append: false // Overwrite the file
-    });
-
-    // Write the updated records back to the CSV
-    await csvWriter.writeRecords(updatedRecords);
-
-    return updatedRecords.find(record => parseInt(record.id) === parseInt(id));
+async function updateData(collectionName, id, newData) {
+    const db = await connectToDatabase();
+    const collection = db.collection(collectionName);
+    await collection.updateOne({ _id: new ObjectId(id) }, { $set: newData });
+    return await collection.findOne({ _id: new ObjectId(id) });
 }
 
-async function replaceAllData(fileName, schema, newData) {
-    const filePath = path.join(__dirname, 'files', `${fileName}.csv`);
-
-    // Create a CSV writer without append mode to overwrite the file
-    const csvWriter = createCsvWriter({
-        path: filePath,
-        header: schema,
-        append: false // Overwrite the file
-    });
-
-    // Write the new data to the CSV, replacing the existing content
-    await csvWriter.writeRecords(newData);
-
-    // Return the newly written data
+async function replaceAllData(collectionName, newData) {
+    const db = await connectToDatabase();
+    const collection = db.collection(collectionName);
+    await collection.deleteMany({});
+    await collection.insertMany(newData);
     return newData;
 }
 
-module.exports = { storeData, getCsvRecord, updateData, replaceAllData };
+module.exports = { connectToDatabase, storeData, getData, updateData, replaceAllData };

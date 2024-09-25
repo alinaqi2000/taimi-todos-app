@@ -21,9 +21,11 @@ import { API_URL } from "@/constants"
 import { UserResponse } from "@/lib/responses"
 import { User } from "@/store/models/User"
 import useLocalStorage from 'react-use-localstorage';
+import { useState } from "react"
+import ClipLoader from "react-spinners/ClipLoader";
 
 const FormSchema = z.object({
-    name: z.string().min(3, { message: "Name must be atleast 3 character." }),
+    name: z.string().min(3, { message: "Name must be atleast 3 character." }).max(12, { message: "Name must be less tahn or equal to 12 character." }),
     email: z.string().email({ message: "Please provide a valid email." }),
     password: z.string().min(6, { message: "Pasword must be atleast 6 character." }),
 })
@@ -31,6 +33,7 @@ const FormSchema = z.object({
 export default function Register() {
     const [localUser, setLocalUser] = useLocalStorage('user');
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -42,9 +45,11 @@ export default function Register() {
     })
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
+        setLoading(true);
         const response = await axios.post<UserResponse>(`${API_URL}users/register`, data)
             .then(res => res.data)
             .catch(res => res.response.data)
+            .finally(() => setLoading(false));
 
         if (response.error) {
             toast({ description: response.error, variant: "destructive" })
@@ -94,7 +99,7 @@ export default function Register() {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" className="w-full" size={"sm"}>Register</Button>
+                    <Button type="submit" disabled={loading} className="w-full" size={"sm"}>{loading ? <ClipLoader className='mx-auto' size={12} /> : "Register"}</Button>
                 </form>
                 <h5 className="text-center text-sm mt-6">Already registered? <Button onClick={() => navigate("/login")} className="p-0" variant={"link"}>Login here</Button></h5>
                 <Toaster />

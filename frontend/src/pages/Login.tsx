@@ -19,6 +19,8 @@ import { UserResponse } from "@/lib/responses"
 import { API_URL } from "@/constants"
 import axios from "axios"
 import useLocalStorage from 'react-use-localstorage';
+import { useState } from "react"
+import ClipLoader from "react-spinners/ClipLoader";
 
 const FormSchema = z.object({
     email: z.string().email({ message: "Please provide a valid email." }),
@@ -27,6 +29,7 @@ const FormSchema = z.object({
 
 export default function Login() {
     const [localUser, setLocalUser] = useLocalStorage('user');
+    const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
 
@@ -39,9 +42,11 @@ export default function Login() {
     })
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
+        setLoading(true);
         const response = await axios.post<UserResponse>(`${API_URL}users/login`, data)
             .then(res => res.data)
             .catch(res => res.response.data)
+            .finally(() => setLoading(false));
 
         if (response.error) {
             toast({ description: response.error, variant: "destructive" })
@@ -79,7 +84,7 @@ export default function Login() {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" className="w-full" size={"sm"}>Login</Button>
+                    <Button type="submit" disabled={loading} className="w-full" size={"sm"}>{loading ? <ClipLoader className='mx-auto' size={12} /> : "Login"}</Button>
                 </form>
                 <h5 className="text-center text-sm mt-6">New to our app? <Button onClick={() => navigate("/register")} className="p-0" variant={"link"}>Register here</Button></h5>
                 <Toaster />
