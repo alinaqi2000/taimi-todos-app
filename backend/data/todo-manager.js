@@ -1,4 +1,4 @@
-const { storeData, getData, updateData, replaceAllData } = require('./data-manager')
+const { storeData, getData, updateData, deleteData } = require('./data-manager')
 const { ObjectId } = require('mongodb');
 
 const COLLECTION_NAME = 'todos';
@@ -22,9 +22,7 @@ async function getTodoById(id) {
 }
 
 async function deleteTodo(id) {
-    const todos = await getData(COLLECTION_NAME);
-    const filteredTodos = todos.filter(t => t._id.toString() !== id);
-    return await replaceAllData(COLLECTION_NAME, filteredTodos);
+    return await deleteData(COLLECTION_NAME, id);
 }
 
 module.exports = { saveTodo, getTodos, getTodoById, updateTodo, deleteTodo }

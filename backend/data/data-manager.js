@@ -29,12 +29,10 @@ async function updateData(collectionName, id, newData) {
     return await collection.findOne({ _id: new ObjectId(id) });
 }
 
-async function replaceAllData(collectionName, newData) {
+async function deleteData(collectionName, id) {
     const db = await connectToDatabase();
-    const collection = db.collection(collectionName);
-    await collection.deleteMany({});
-    await collection.insertMany(newData);
-    return newData;
+    const collection = db.collection(collectionName); 
+    return await collection.deleteOne({ _id: new ObjectId(id) });
 }
 
-module.exports = { connectToDatabase, storeData, getData, updateData, replaceAllData };
+module.exports = { connectToDatabase, storeData, getData, updateData, deleteData };
